@@ -993,12 +993,15 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	}
 
 	if (oplus_display_get_hbm_mode()) {
-		if (bl_lvl > (panel->bl_config.bl_normal_max_level)) {
+		if (bl_lvl > panel->bl_config.bl_normal_max_level) {
+			/* Plný HBM jas na slunci - nechat běžet */
 			pr_err("backlight smooth check racing issue oplus_display_get_hbm_mode (bl_lvl high: %d)\n", bl_lvl);
 			return rc;
 		} else {
-			pr_info("HBM bypass triggered: thermal throttling or manual dimming (bl_lvl: %d)\n", bl_lvl);
-			__oplus_display_set_hbm(0);
+			if (bl_lvl > 100 && panel->panel_initialized) {
+				pr_info("HBM break-out triggered: forcing HBM recovery to 0 (bl_lvl: %d)\n", bl_lvl);
+				__oplus_display_set_hbm(0);
+			}
 		}
 	}
 

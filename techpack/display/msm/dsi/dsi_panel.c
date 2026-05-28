@@ -990,15 +990,17 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	}
 
 	if (oplus_display_get_hbm_mode()) {
-		if (bl_lvl < oplus_last_backlight && (oplus_last_backlight - bl_lvl) > 50) {
-			if (bl_lvl > 0 && panel->panel_initialized) {
-				pr_info("HBM delta drop detected: forcing HBM recovery to 0 (bl_lvl: %d, last: %d)\n", bl_lvl, oplus_last_backlight);
-				__oplus_display_set_hbm(0);
-			}
+		if (bl_lvl > panel->bl_config.bl_normal_max_level) {
+			pr_err("backlight smooth check racing issue oplus_display_get_hbm_mode (bl_lvl high: %d)\n", bl_lvl);
+			return rc;
 		} else {
-			if (bl_lvl > panel->bl_config.bl_normal_max_level) {
-				pr_err("backlight smooth check racing issue oplus_display_get_hbm_mode (bl_lvl high: %d)\n", bl_lvl);
-				return rc;
+			if (panel->panel_initialized && bl_lvl < 1000) {
+				struct dsi_display *main_disp = get_main_display();
+				if (main_disp) {
+					pr_info("HBM safety break-out: Executing proper dsi_display_hbm_off (bl_lvl: %d)\n", bl_lvl);
+					dsi_display_hbm_off(main_disp);
+					__oplus_display_set_hbm(0);
+				}
 			}
 		}
 	}

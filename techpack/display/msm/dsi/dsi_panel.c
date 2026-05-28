@@ -978,9 +978,12 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	}
 
 	if (panel->is_hbm_enabled && (bl_lvl != 0)) {
-		if (bl_lvl > (panel->bl_config.bl_normal_max_level - 200)) {
+		if (bl_lvl > panel->bl_config.bl_normal_max_level) {
 			pr_err("backlight smooth check racing issue is_hbm_enabled\n");
 			return 0;
+		} else {
+			/* Resetujeme flag, protože jas už padá dolů */
+			panel->is_hbm_enabled = false;
 		}
 	}
 
@@ -990,14 +993,12 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	}
 
 	if (oplus_display_get_hbm_mode()) {
-		if (bl_lvl > (panel->bl_config.bl_normal_max_level - 200)) {
+		if (bl_lvl > (panel->bl_config.bl_normal_max_level)) {
 			pr_err("backlight smooth check racing issue oplus_display_get_hbm_mode (bl_lvl high: %d)\n", bl_lvl);
 			return rc;
 		} else {
 			pr_info("HBM bypass triggered: thermal throttling or manual dimming (bl_lvl: %d)\n", bl_lvl);
-			if (bl_lvl == 0) {
-				__oplus_display_set_hbm(0);
-			}
+			__oplus_display_set_hbm(0);
 		}
 	}
 

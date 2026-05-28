@@ -978,7 +978,7 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	}
 
 	if (panel->is_hbm_enabled && (bl_lvl != 0)) {
-		if (bl_lvl > panel->bl_config.bl_normal_max_level) {
+		if (bl_lvl > (panel->bl_config.bl_normal_max_level - 200)) {
 			pr_err("backlight smooth check racing issue is_hbm_enabled\n");
 			return 0;
 		}
@@ -990,19 +990,14 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	}
 
 	if (oplus_display_get_hbm_mode()) {
-		if (bl_lvl > panel->bl_config.bl_normal_max_level) {
-			/* Pokud je požadovaný jas stále extrémně vysoký,
-			 *	   ponecháme ochranu aktivní, aby displej neblikal */
+		if (bl_lvl > (panel->bl_config.bl_normal_max_level - 200)) {
 			pr_err("backlight smooth check racing issue oplus_display_get_hbm_mode (bl_lvl high: %d)\n", bl_lvl);
 			return rc;
 		} else {
-			/* Pokud se jas snižuje pod normální maximum (přehřátí / stín),
-			 *	   dovolíme zápis hodnoty a pro jistotu zkusíme shodit HBM stav */
 			pr_info("HBM bypass triggered: thermal throttling or manual dimming (bl_lvl: %d)\n", bl_lvl);
 			if (bl_lvl == 0) {
 				__oplus_display_set_hbm(0);
 			}
-			/* return rc;  <-- TENTO RETURN IGNORUJEME, kód pokračuje dál */
 		}
 	}
 
